@@ -12,7 +12,7 @@ Milo can interface with both Gaussian 16 and Gaussian 09 to perform force calcul
 Milo is only intended to work on a Linux based operating system through the command line.
 
 ### Installation Guide
-1. Unzip milo-1.0.0.zip in your home directory  
+1. Unzip milo-1.0.1.zip in your home directory  
 2. Add the following to your .bashrc:  
   `export PYTHONPATH=$PYTHONPATH:$HOME/milo-1.0.0`  
 3. (Optional) Also add the following to your .bashrc, to make calling scripts easier:  
