@@ -1,3 +1,6 @@
+### Please cite Milo as:
+Milo, Revision 1.0.1, M. S. Teynor, N. Wohlgemuth, L. Carlson, J. Huang, S. L. Pugh, B. O. Grant, R. S. Hamilton, R. Carlsen, and D. H. Ess, Brigham Young University, Provo UT, 2021.
+
 ### Requirements
 #### Python:
 Milo has only been tested against Python 3.8. It is expected to work with Python 3.6+, but will not work with Python 3.5 or older.
