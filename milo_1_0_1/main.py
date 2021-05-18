@@ -164,9 +164,9 @@ def print_header():
     print("Carlsen, Daniel H. Ess")
     print()
     print("Please cite Milo as:")
-    print("Milo, Revision 1.0.0, M. S. Teynor, N. Wohlgemuth, L. Carlson,")
+    print("Milo, Revision 1.0.1, M. S. Teynor, N. Wohlgemuth, L. Carlson,")
     print("J. Huang, S. L. Pugh, B. O. Grant, R. S. Hamilton, R. Carlsen,")
-    print("D. H. Ess, Brigham Young University, Provo UT, 2020.")
+    print("D. H. Ess, Brigham Young University, Provo UT, 2021.")
     print()
 
 
