@@ -49,7 +49,7 @@ echo "Starting Milo run"
 module load python/3.8
 #module load g09
 module load g16
-python -m milo_1_0_1 < "$JOB_NAME.in" > "${JOB_NAME}_${SLURM_JOB_ID}.out" &
+python -m milo_1_0_2 < "$JOB_NAME.in" > "${JOB_NAME}_${SLURM_JOB_ID}.out" &
 pid=$!
 # Associate the function "cleanup" with the TERM signal, which is usually
 # how jobs get killed
