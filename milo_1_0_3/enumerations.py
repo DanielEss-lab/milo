@@ -7,7 +7,7 @@ Quick reference: https://docs.python.org/3/library/enum.html
 Enums declared in alphabetical order
 
 Suggested usage:
-from milo_1_0_2 import enumerations as enums
+from milo_1_0_3 import enumerations as enums
 my_var = enums.ProgramID.GAUSSIAN_16
 """
 

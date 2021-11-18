@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 """Store data used throughout the simulation."""
 
-from milo_1_0_2 import containers
-from milo_1_0_2 import enumerations as enums
-from milo_1_0_2 import random_number_generator as rng
+from milo_1_0_3 import containers
+from milo_1_0_3 import enumerations as enums
+from milo_1_0_3 import random_number_generator as rng
 
 
 class ProgramState:

@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 """Calculate the next position using force data from previous step."""
 
-from milo_1_0_2 import containers
-from milo_1_0_2 import enumerations as enums
+from milo_1_0_3 import containers
+from milo_1_0_3 import enumerations as enums
 
 
 def get_propagation_handler(program_state):

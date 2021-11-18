@@ -3,12 +3,13 @@
 """Parses input file and populates a ProgramState object."""
 
 from copy import deepcopy
+import io
 import os
 
-from milo_1_0_2 import atom
-from milo_1_0_2 import containers
-from milo_1_0_2 import enumerations as enums
-from milo_1_0_2 import exceptions
+from milo_1_0_3 import atom
+from milo_1_0_3 import containers
+from milo_1_0_3 import enumerations as enums
+from milo_1_0_3 import exceptions
 
 required_sections = ("$job", "$molecule", )
 
@@ -49,7 +50,13 @@ parameters_with_defaults = {
 def parse_input(input_iterable, program_state):
     """Populate a ProgramState object from an input file."""
     # Break input into lines
-    input = input_iterable.readlines()
+    if isinstance(input_iterable, io.IOBase):
+        input = input_iterable.readlines()
+        print("IOBase recognized")
+    elif isinstance(input_iterable, list):
+        input = input_iterable
+    else:
+        raise exceptions.InputError("Unrecognized input iterable.")
 
     # Print entire input file
     print("### Input File ---------------------------------------------------")
@@ -295,6 +302,16 @@ class JobSection():
     """
 
     @staticmethod
+    def current_step(options, program_state):
+        """Populate program_state.current_step from options."""
+        err_msg = (f"Could not interpret 'current_step {options}'. Expected "
+                   "'current_step int'.")
+        try:
+            program_state.current_step = int(options)
+        except ValueError:
+            raise exceptions.InputError(err_msg)
+
+    @staticmethod
     def energy_boost(options, program_state):
         """Populate program_state.energy_boost from options."""
         err_msg = (f"Could not interpret parameter 'energy_boost {options}'. "
@@ -524,7 +541,7 @@ def main():
     """Parse input from stdin to check input file validity."""
     import os
     import sys
-    from milo_1_0_2 import program_state as ps
+    from milo_1_0_3 import program_state as ps
 
     stdout = sys.stdout
     null_output = open(os.devnull, 'w')

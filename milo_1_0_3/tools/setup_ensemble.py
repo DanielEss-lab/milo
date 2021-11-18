@@ -213,7 +213,7 @@ def make_submission_script(file_name, time_string, memory, procs,
         file.write('\n')
         file.write('module load python/3.8\n')
         file.write(f'module load {gaussian_string}\n')
-        file.write('python -m milo_1_0_2 < "$JOB_NAME.in" > ')
+        file.write('python -m milo_1_0_3 < "$JOB_NAME.in" > ')
         file.write('"$JOB_NAME.out" &\n')
         file.write('pid=$!\n')
         file.write('# Associate the function "cleanup" with the TERM signal, '

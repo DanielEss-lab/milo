@@ -4,9 +4,9 @@
 
 import os
 
-from milo_1_0_2 import containers
-from milo_1_0_2 import enumerations as enums
-from milo_1_0_2 import exceptions
+from milo_1_0_3 import containers
+from milo_1_0_3 import enumerations as enums
+from milo_1_0_3 import exceptions
 
 
 def get_program_handler(program_state):

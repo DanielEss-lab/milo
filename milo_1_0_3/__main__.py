@@ -2,6 +2,6 @@
 # -*- coding: utf-8 -*-
 """Run Milo."""
 
-from milo_1_0_2 import main
+from milo_1_0_3 import main
 
 main.main()

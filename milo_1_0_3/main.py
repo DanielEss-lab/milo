@@ -5,11 +5,11 @@
 import sys
 import traceback
 
-from milo_1_0_2 import electronic_structure_program_handler as esph
-from milo_1_0_2 import force_propagation_handler as fph
-from milo_1_0_2 import initial_energy_sampler
-from milo_1_0_2 import input_parser
-from milo_1_0_2 import program_state as ps
+from milo_1_0_3 import electronic_structure_program_handler as esph
+from milo_1_0_3 import force_propagation_handler as fph
+from milo_1_0_3 import initial_energy_sampler
+from milo_1_0_3 import input_parser
+from milo_1_0_3 import program_state as ps
 
 
 def main():
@@ -29,7 +29,11 @@ def main():
 
         print_trajectory_units_header()
 
-        print("### Step 0: 0.0 fs ".ljust(66, '-'))
+        current_time = round(program_state.current_step *
+                        program_state.step_size.as_femtosecond(), 10)
+        print(f"### Step {program_state.current_step}: "
+              f"{current_time} fs ".ljust(66, '-'))
+
         print_structure(program_state)
 
         while not end_conditions_met(program_state):
@@ -77,11 +81,14 @@ def end_conditions_met(program_state):
 def output_xyz_file(program_state):
     """Write .xyz file."""
     with open(f"{program_state.job_name}.xyz", 'w') as file:
-        for current_step, structure in enumerate(program_state.structures):
+        starting_step = (program_state.current_step
+                         - len(program_state.structures) + 1)
+        for step, structure in enumerate(program_state.structures,
+                                         start=starting_step):
             file.write(f"{program_state.number_atoms}\n")
-            current_time = round(current_step *
+            current_time = round(step *
                             program_state.step_size.as_femtosecond(), 10)
-            file.write(f"Step {current_step}: {current_time} fs\n")
+            file.write(f"  Step {step}: {current_time} fs\n")
             for atom, (x, y, z) in zip(program_state.atoms,
                                        structure.as_angstrom()):
                 file.write(f"{atom.symbol} {x:15.6f} {y:15.6f} {z:15.6f}\n")
@@ -157,7 +164,7 @@ def print_header():
     print()
     print("Copyright 2021 Brigham Young University")
     print()
-    print("You are using Milo 1.0.2 (23 August 2021 Update)")
+    print("You are using Milo 1.0.3 (18 November 2021 Update)")
     print()
     print("Authors:")
     print("Matthew S. Teynor, Nathan Wohlgemuth, Lily Carlson, Johnny Huang,")
@@ -165,7 +172,7 @@ def print_header():
     print("Carlsen, Daniel H. Ess")
     print()
     print("Please cite Milo as:")
-    print("Milo, Revision 1.0.2, M. S. Teynor, N. Wohlgemuth, L. Carlson,")
+    print("Milo, Revision 1.0.3, M. S. Teynor, N. Wohlgemuth, L. Carlson,")
     print("J. Huang, S. L. Pugh, B. O. Grant, R. S. Hamilton, R. Carlsen,")
     print("D. H. Ess, Brigham Young University, Provo UT, 2021.")
     print()

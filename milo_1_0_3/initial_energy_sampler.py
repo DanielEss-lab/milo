@@ -4,10 +4,10 @@
 
 import math
 
-from milo_1_0_2 import containers
-from milo_1_0_2 import enumerations as enums
-from milo_1_0_2 import exceptions
-from milo_1_0_2 import scientific_constants as sc
+from milo_1_0_3 import containers
+from milo_1_0_3 import enumerations as enums
+from milo_1_0_3 import exceptions
+from milo_1_0_3 import scientific_constants as sc
 
 
 def _calculate_zero_point_energies(program_state):
@@ -164,9 +164,9 @@ def _geometry_displacement(shifts, program_state):
     return
 
 
-def _calculate_phase_displacement_direction(program_state):
+def _check_if_mode_pushes_apart(program_state):
     """
-    Find the change in position of the atoms specified in phase from mode data.
+    Check if the first mode increases the distance between the phase atoms.
 
     Reference: C++ line 185.
     """
@@ -194,7 +194,7 @@ def _calculate_phase_displacement_direction(program_state):
                       + pow(atom1_new_position[1] - atom2_new_position[1], 2)
                       + pow(atom1_new_position[2] - atom2_new_position[2], 2))
 
-    return before_distance - after_distance
+    return after_distance - before_distance > 0
 
 
 def _calculate_mode_velocities(mode_energy, shift, program_state):
@@ -204,7 +204,7 @@ def _calculate_mode_velocities(mode_energy, shift, program_state):
     Reference: C++ line 181.
     """
     mode_velocities = list()
-    random_mode_directions = list()
+    mode_directions = list()
 
     #          10^-3      *    10^-2      *    10^10             = 10^5
     units = sc.FROM_MILLI * sc.FROM_CENTI * sc.METER_TO_ANGSTROM
@@ -215,40 +215,26 @@ def _calculate_mode_velocities(mode_energy, shift, program_state):
             (0.5 * program_state.force_constants.as_millidyne_per_angstrom(f)
             * math.pow(shift[f], 2))))
         if f == 0 and program_state.frequencies.as_recip_cm(f) < 0:
-            random_direction = _phase_check(program_state)
+            if program_state.phase_direction is enums.PhaseDirection.RANDOM:
+                direction = program_state.random.one_or_neg_one()
+            else:
+                if _check_if_mode_pushes_apart(program_state):
+                    direction = 1
+                else:
+                    direction = -1
         else:
-            random_direction = program_state.random.one_or_neg_one()
+            direction = program_state.random.one_or_neg_one()
+        if (program_state.phase_direction is
+                enums.PhaseDirection.BRING_TOGETHER):
+            direction *= -1
         if f + 1 in program_state.fixed_mode_directions:
             # This needs to rewrite the random call from above so the random
             # number generator will give the same results for everything else.
-            random_direction = program_state.fixed_mode_directions[f + 1]
-        random_mode_directions.append(random_direction)
-        mode_velocities.append(random_direction * math.sqrt(2 * kinetic_energy
+            direction = program_state.fixed_mode_directions[f + 1]
+        mode_directions.append(direction)
+        mode_velocities.append(direction * math.sqrt(2 * kinetic_energy
             / (program_state.reduced_masses.as_amu(f) / sc.AVOGADROS_NUMBER)))
-    return mode_velocities, random_mode_directions
-
-
-def _phase_check(program_state):
-    """
-    Return 1 or -1 depending on phase desired for first imaginary mode.
-
-    Referece: C++ line 214.
-    """
-    if (program_state.phase_direction is not
-            enums.PhaseDirection.RANDOM):
-        distance = _calculate_phase_displacement_direction(program_state)
-        if (program_state.phase_direction is enums.PhaseDirection.PUSH_APART):
-            if distance > 0:
-                return -1
-            else:
-                return 1
-        else:  # PhaseDirection is BRING_TOGETHER
-            if distance < 0:
-                return -1
-            else:
-                return 1
-    else:  # PhaseDirection is RANDOM
-        return program_state.random.one_or_neg_one()
+    return mode_velocities, mode_directions
 
 
 def _calculate_atomic_velocities(mode_velocities, program_state):
@@ -423,7 +409,7 @@ def generate(program_state):
         print("  starting geometry.")
     print()
 
-    mode_velocities, random_mode_directions = _calculate_mode_velocities(
+    mode_velocities, mode_directions = _calculate_mode_velocities(
         mode_energies, shifts, program_state)
 
     print("### Vibrational Quantum Numbers ----------------------------------")
@@ -431,7 +417,7 @@ def generate(program_state):
     print("  ----------------------------------------------------------------")
     for i, (mode_energy, quantum_n, frequency, direction) in enumerate(zip(
             mode_energies.as_kcal_per_mole(), vibrational_quantum_numbers,
-            program_state.frequencies.as_recip_cm(), random_mode_directions),
+            program_state.frequencies.as_recip_cm(), mode_directions),
             1):
         print(f"  {i:>4}  {frequency:10.3f}  {quantum_n:>11}  "
               f"{mode_energy:17.6f}  {direction:>14}")

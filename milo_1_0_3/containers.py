@@ -2,14 +2,14 @@
 # -*- coding: utf-8 -*-
 """Define classes used to extend list functionality to make units easy."""
 
-from milo_1_0_2 import enumerations as enums
-from milo_1_0_2 import scientific_constants as sc
-from milo_1_0_2 import atom
+from milo_1_0_3 import enumerations as enums
+from milo_1_0_3 import scientific_constants as sc
+from milo_1_0_3 import atom
 
 
 class Positions:
     """
-    Extend a list to make x, y, z positional data easy to use.
+    Extend a list to make xyz positional data easy to use.
 
     Always stored as angstrom
     """
@@ -24,70 +24,47 @@ class Positions:
 
     def alter_position(self, index, x, y, z, units):
         """Set the xyz position at index to new tuple."""
-        if index >= self.__len__():
-            raise IndexError("Position to be altered is outside range.")
         if units is enums.DistanceUnits.ANGSTROM:
-            self._positions[index] = (x, y, z)
+            factor = 1
         elif units is enums.DistanceUnits.BOHR:
-            x *= sc.BOHR_TO_ANGSTROM
-            y *= sc.BOHR_TO_ANGSTROM
-            z *= sc.BOHR_TO_ANGSTROM
-            self._positions[index] = (x, y, z)
+            factor = sc.BOHR_TO_ANGSTROM
         elif units is enums.DistanceUnits.METER:
-            x *= sc.METER_TO_ANGSTROM
-            y *= sc.METER_TO_ANGSTROM
-            z *= sc.METER_TO_ANGSTROM
-            self._positions[index] = (x, y, z)
+            factor = sc.METER_TO_ANGSTROM
         else:
             raise ValueError(f"Unknown positions unit: {units}")
+        self._positions[index] = tuple(i * factor for i in (x, y, z))
 
     def append(self, x, y, z, units):
         """Append x, y, z as a tuple to the end of the list."""
         if units is enums.DistanceUnits.ANGSTROM:
-            self._positions.append((x, y, z))
+            factor = 1
         elif units is enums.DistanceUnits.BOHR:
-            x *= sc.BOHR_TO_ANGSTROM
-            y *= sc.BOHR_TO_ANGSTROM
-            z *= sc.BOHR_TO_ANGSTROM
-            self._positions.append((x, y, z))
+            factor = sc.BOHR_TO_ANGSTROM
         elif units is enums.DistanceUnits.METER:
-            x *= sc.METER_TO_ANGSTROM
-            y *= sc.METER_TO_ANGSTROM
-            z *= sc.METER_TO_ANGSTROM
-            self._positions.append((x, y, z))
+            factor = sc.METER_TO_ANGSTROM
         else:
             raise ValueError(f"Unknown positions unit: {units}")
+        self._positions.append(tuple(i * factor for i in (x, y, z)))
 
     def as_angstrom(self, index=None):
         """Return the entire list or specific index in angstroms."""
         if index is None:
             return self._positions
-        else:
-            return self._positions[index]
+        return self._positions[index]
 
     def as_bohr(self, index=None):
         """Return the entire list or specific index in bohr radii."""
+        factor = sc.ANGSTROM_TO_BOHR
         if index is None:
-            conversion = list()
-            for x, y, z in self._positions:
-                conversion.append((x * sc.ANGSTROM_TO_BOHR,
-                                   y * sc.ANGSTROM_TO_BOHR,
-                                   z * sc.ANGSTROM_TO_BOHR))
-            return conversion
-        else:
-            return self._positions[index] * sc.ANGSTROM_TO_BOHR
+            return [tuple(i * factor for i in j) for j in self._positions]
+        return tuple(i * factor for i in self._positions[index])
 
     def as_meter(self, index=None):
         """Return the entire list or specific index in meters."""
+        factor = sc.ANGSTROM_TO_METER
         if index is None:
-            conversion = list()
-            for x, y, z in self._positions:
-                conversion.append((x * sc.ANGSTROM_TO_METER,
-                                   y * sc.ANGSTROM_TO_METER,
-                                   z * sc.ANGSTROM_TO_METER))
-            return conversion
-        else:
-            return self._positions[index] * sc.ANGSTROM_TO_METER
+            return [tuple(i * factor for i in j) for j in self._positions]
+        return tuple(i * factor for i in self._positions[index])
 
     @classmethod
     def from_velocity(cls, velocities, change_in_time):
@@ -96,12 +73,10 @@ class Positions:
 
         Δx = v * Δt
         """
-        if (type(velocities) is not Velocities
-                or type(change_in_time) is not Time):
-            raise TypeError(f"cannot create Positions object from"
-                            f"'{type(velocities)}' "
-                            f"and '{type(change_in_time)}'")
-
+        if not (isinstance(velocities, Velocities) and
+                isinstance(change_in_time, Time)):
+            raise TypeError(f"Cannot create Positions object from "
+                f"'{type(velocities)}' and '{type(change_in_time)}'.")
         displacement = cls()
         dt = change_in_time.as_second()
         for (x, y, z) in velocities.as_meter_per_sec():
@@ -116,12 +91,10 @@ class Positions:
 
         Δx = a*Δt^2
         """
-        if (type(acceleration) is not Accelerations
-                or type(change_in_time) is not Time):
-            raise TypeError(f"cannot create Positions object from"
-                            f"'{type(acceleration)}' "
-                            f"and '{type(change_in_time)}'")
-
+        if not (isinstance(acceleration, Accelerations) and
+                isinstance(change_in_time, Time)):
+            raise TypeError(f"cannot create Positions object from "
+                f"'{type(acceleration)}' and '{type(change_in_time)}'")
         displacement = cls()
         dt2 = change_in_time.as_second() ** 2
         for (x, y, z) in acceleration.as_meter_per_sec_sqrd():
@@ -129,55 +102,55 @@ class Positions:
                                 units=enums.DistanceUnits.METER)
         return displacement
 
+    def __add__(self, other):
+        """Add operator functionality."""
+        if not isinstance(other, Positions):
+            return NotImplemented
+        total = Positions()
+        for (x1, y1, z1), (x2, y2, z2) in zip(self.as_angstrom(),
+                                              other.as_angstrom()):
+            total.append(x1 + x2, y1 + y2, z1 + z2,
+                         enums.DistanceUnits.ANGSTROM)
+        return total
+
+    def __sub__(self, other):
+        """Subtraction operator functionality."""
+        if not isinstance(other, Positions):
+            return NotImplemented
+        difference = Positions()
+        for (x1, y1, z1), (x2, y2, z2) in zip(self.as_angstrom(),
+                                              other.as_angstrom()):
+            difference.append(x1 - x2, y1 - y2, z1 - z2,
+                              enums.DistanceUnits.ANGSTROM)
+        return difference
+
+    def __mul__(self, other):
+        """Multiplication operator functionality."""
+        if not isinstance(other, (int, float)):
+            return NotImplemented
+        products = Positions()
+        for (x, y, z) in self.as_angstrom():
+            products.append(x * other, y * other, z * other,
+                            enums.DistanceUnits.ANGSTROM)
+        return products
+
+    __rmul__ = __mul__
+
     def __str__(self):
         """Return structure as multiline string."""
         strings = []
         for x, y, z in self._positions:
-            strings.append(f"{x:10.6f}{y:10.6f}{z:10.6f}")
+            strings.append(f"{x:10.6f} {y:10.6f} {z:10.6f}")
         return '\n'.join(strings)
 
     def __repr__(self):
         """Return object representation."""
         return f"<Positions object with {len(self._positions)} atoms.>"
 
-    def __add__(self, other):
-        """Add operator functionality."""
-        if type(other) is not Positions:
-            raise TypeError(f"unsupported operand type(s) for +: 'Positions' "
-                            f"and '{type(other)}'")
-        total = Positions()
-        for (x1, y1, z1), (x2, y2, z2) in zip(self.as_meter(),
-                                              other.as_meter()):
-            total.append(x1 + x2, y1 + y2, z1 + z2, enums.DistanceUnits.METER)
-        return total
-
-    def __sub__(self, other):
-        """Subtraction operator functionality."""
-        if type(other) is not Positions:
-            raise TypeError(f"unsupported operand type(s) for -: 'Positions' "
-                            f"and '{type(other)}'")
-        difference = Positions()
-        for (x1, y1, z1), (x2, y2, z2) in zip(self.as_meter(),
-                                              other.as_meter()):
-            difference.append(x1 - x2, y1 - y2, z1 - z2,
-                              enums.DistanceUnits.METER)
-        return difference
-
-    def __mul__(self, other):
-        """Multiplication operator functionality."""
-        if type(other) is not int and type(other) is not float:
-            raise TypeError(f"can't multiply Positions object by non scalar "
-                            f"of type '{type(other)}'")
-        products = Positions()
-        for (x1, y1, z1) in self.as_meter():
-            products.append(x1 * other, y1 * other, z1 * other,
-                            enums.DistanceUnits.METER)
-        return products
-
 
 class Velocities:
     """
-    Extend a list to make x, y, z momentum data easy to use.
+    Extend a list to make xyz momentum data easy to use.
 
     Always store as meters per second
     """
@@ -193,54 +166,34 @@ class Velocities:
     def append(self, x, y, z, units):
         """Append x, y, z as a tuple to the end of the list."""
         if units is enums.VelocityUnits.METER_PER_SEC:
-            self._velocities.append((x, y, z))
+            factor = 1
         elif units is enums.VelocityUnits.ANGSTROM_PER_FS:
-            x *= sc.ANGSTROM_TO_METER * (1 / sc.FEMTOSECOND_TO_SECOND)
-            y *= sc.ANGSTROM_TO_METER * (1 / sc.FEMTOSECOND_TO_SECOND)
-            z *= sc.ANGSTROM_TO_METER * (1 / sc.FEMTOSECOND_TO_SECOND)
-            self._velocities.append((x, y, z))
+            factor = sc.ANGSTROM_TO_METER * (1 / sc.FEMTOSECOND_TO_SECOND)
         elif units is enums.VelocityUnits.ANGSTROM_PER_SEC:
-            x *= sc.ANGSTROM_TO_METER
-            y *= sc.ANGSTROM_TO_METER
-            z *= sc.ANGSTROM_TO_METER
-            self._velocities.append((x, y, z))
+            factor = sc.ANGSTROM_TO_METER
         else:
             raise ValueError(f"Unknown velocity unit: {units}")
+        self._velocities.append(tuple(i * factor for i in (x, y, z)))
 
     def as_meter_per_sec(self, index=None):
         """Return the entire list or specific index in m/s."""
         if index is None:
             return self._velocities
-        else:
-            return self._velocities[index]
+        return self._velocities[index]
 
     def as_angstrom_per_fs(self, index=None):
         """Return the entire list or specific index in angstrom/fs."""
+        factor = (sc.METER_TO_ANGSTROM * (1 / sc.SECOND_TO_FEMTOSECOND))
         if index is None:
-            conversion = list()
-            conversion_factor = (sc.METER_TO_ANGSTROM *
-                                (1 / sc.SECOND_TO_FEMTOSECOND))
-            for (x, y, z) in self._velocities:
-                conversion.append((x * conversion_factor,
-                                   y * conversion_factor,
-                                   z * conversion_factor))
-            return conversion
-        else:
-            return (self._velocities[index] * sc.METER_TO_ANGSTROM *
-                    (1 / sc.SECOND_TO_FEMTOSECOND))
+            return [tuple(i * factor for i in j) for j in self._velocities]
+        return tuple(i * factor for i in self._velocities[index])
 
     def as_angstrom_per_sec(self, index=None):
         """Return the entire list or specific index in angstrom/s."""
+        factor = sc.METER_TO_ANGSTROM
         if index is None:
-            conversion = list()
-            conversion_factor = (sc.METER_TO_ANGSTROM)
-            for (x, y, z) in self._velocities:
-                conversion.append((x * conversion_factor,
-                                   y * conversion_factor,
-                                   z * conversion_factor))
-            return conversion
-        else:
-            return (self._velocities[index] * sc.METER_TO_ANGSTROM)
+            return [tuple(i * factor for i in j) for j in self._velocities]
+        return tuple(i * factor for i in self._velocities[index])
 
     @classmethod
     def from_acceleration(cls, acceleration, change_in_time):
@@ -249,12 +202,10 @@ class Velocities:
 
         Δv = a*Δt
         """
-        if (type(acceleration) is not Accelerations
-                or type(change_in_time) is not Time):
-            raise TypeError(f"cannot create Velocities object from"
-                            f"'{type(acceleration)}' "
-                            f"and '{type(change_in_time)}'")
-
+        if not (isinstance(acceleration, Accelerations) and
+                isinstance(change_in_time, Time)):
+            raise TypeError(f"Cannot create Velocities object from "
+                f"'{type(acceleration)}' and '{type(change_in_time)}'.")
         displacement = cls()
         dt = change_in_time.as_second()
         for (x, y, z) in acceleration.as_meter_per_sec_sqrd():
@@ -262,22 +213,10 @@ class Velocities:
                                 units=enums.VelocityUnits.METER_PER_SEC)
         return displacement
 
-    def __str__(self):
-        """Return structure as multiline string."""
-        strings = []
-        for x, y, z in self._velocities:
-            strings.append(f"{x:10.6f}{y:10.6f}{z:10.6f}")
-        return '\n'.join(strings)
-
-    def __repr__(self):
-        """Return object representation."""
-        return f"<Velocities object with {len(self._velocities)} atoms.>"
-
     def __add__(self, other):
         """Add operator functionality."""
-        if type(other) is not Velocities:
-            raise TypeError(f"unsupported operand type(s) for +: 'Velocities' "
-                            f"and '{type(other)}'")
+        if not isinstance(other, Velocities):
+            return NotImplemented
         total = Velocities()
         for (x1, y1, z1), (x2, y2, z2) in zip(self.as_meter_per_sec(),
                                               other.as_meter_per_sec()):
@@ -287,9 +226,8 @@ class Velocities:
 
     def __sub__(self, other):
         """Subtraction operator functionality."""
-        if type(other) is not Positions:
-            raise TypeError(f"unsupported operand type(s) for -: 'Velocities' "
-                            f"and '{type(other)}'")
+        if not isinstance(other, Velocities):
+            return NotImplemented
         difference = Velocities()
         for (x1, y1, z1), (x2, y2, z2) in zip(self.as_meter_per_sec(),
                                               other.as_meter_per_sec()):
@@ -299,19 +237,31 @@ class Velocities:
 
     def __mul__(self, other):
         """Multiplication operator functionality."""
-        if type(other) is not int and type(other) is not float:
-            raise TypeError(f"can't multiply Velocities object by non scalar "
-                            f"of type '{type(other)}'")
+        if not isinstance(other, (int, float)):
+            return NotImplemented
         products = Velocities()
-        for (x1, y1, z1) in self.as_meter_per_sec():
-            products.append(x1 * other, y1 * other, z1 * other,
+        for (x, y, z) in self.as_meter_per_sec():
+            products.append(x * other, y * other, z * other,
                             enums.VelocityUnits.METER_PER_SEC)
         return products
+
+    __rmul__ = __mul__
+
+    def __str__(self):
+        """Return structure as multiline string."""
+        strings = []
+        for x, y, z in self._velocities:
+            strings.append(f"{x:10.6f} {y:10.6f} {z:10.6f}")
+        return '\n'.join(strings)
+
+    def __repr__(self):
+        """Return object representation."""
+        return f"<Velocities object with {len(self._velocities)} atoms.>"
 
 
 class Accelerations:
     """
-    Extend a list to make x, y, z acceleration data easy to use.
+    Extend a list to make xyz acceleration data easy to use.
 
     Always store as meters per second squared
     """
@@ -327,16 +277,16 @@ class Accelerations:
     def append(self, x, y, z, units):
         """Append x, y, z as a tuple to the end of the list."""
         if units is enums.AccelerationUnits.METER_PER_SEC_SQRD:
-            self._accelerations.append((x, y, z))
+            factor = 1
         else:
             raise ValueError(f"Unknown Acceleration units: {units}")
+        self._accelerations.append(tuple(i * factor for i in (x, y, z)))
 
     def as_meter_per_sec_sqrd(self, index=None):
         """Return the entire list or specific index in m/s^2."""
         if index is None:
             return self._accelerations
-        else:
-            return self._accelerations[index]
+        return self._accelerations[index]
 
     @classmethod
     def from_forces(cls, forces, atoms):
@@ -345,34 +295,20 @@ class Accelerations:
 
         F = ma --> a = F / m
         """
-        if type(forces) is not Forces or (type(atoms) is not list or
-                                          type(atoms[0]) is not atom.Atom):
-            raise TypeError(f"cannot create Positions object from"
-                            f"'{type(forces)}' and '{type(atoms)}'")
-        atom_masses = [element.mass * sc.AMU_TO_KG for element in atoms]
-        atom_forces = forces.as_newton()
-
+        if not (isinstance(forces, Forces) and isinstance(atoms, list) and
+                isinstance(atoms[0], atom.Atom)):
+            raise TypeError(f"Cannot create Accelerations object from"
+                f"'{type(forces)}' and '{type(atoms)}'.")
         accelerations = cls()
-        for mass, (x, y, z) in zip(atom_masses, atom_forces):
-            acceleration = (x / mass, y / mass, z / mass)
-            accelerations.append(*acceleration,
+        atom_masses_kg = [element.mass * sc.AMU_TO_KG for element in atoms]
+        for mass, (x, y, z) in zip(atom_masses_kg, forces.as_newton()):
+            accelerations.append(x / mass, y / mass, z / mass,
                                  enums.AccelerationUnits.METER_PER_SEC_SQRD)
         return accelerations
 
-    def __str__(self):
-        """Return structure as multiline string."""
-        strings = []
-        for x, y, z in self._accelerations:
-            strings.append(f"{x:10.6f}{y:10.6f}{z:10.6f}")
-        return '\n'.join(strings)
-
-    def __repr__(self):
-        """Return object representation."""
-        return f"<Accelerations object with {len(self._accelerations)} atoms.>"
-
     def __add__(self, other):
         """Add operator functionality."""
-        if type(other) is not Accelerations:
+        if not isinstance(other, Accelerations):
             return NotImplemented
         total = Accelerations()
         for (x1, y1, z1), (x2, y2, z2) in zip(self.as_meter_per_sec_sqrd(),
@@ -383,7 +319,7 @@ class Accelerations:
 
     def __sub__(self, other):
         """Subtraction operator functionality."""
-        if type(other) is not Positions:
+        if not isinstance(other, Accelerations):
             return NotImplemented
         difference = Accelerations()
         for (x1, y1, z1), (x2, y2, z2) in zip(self.as_meter_per_sec_sqrd(),
@@ -394,18 +330,31 @@ class Accelerations:
 
     def __mul__(self, other):
         """Multiplication operator functionality."""
-        if type(other) is not int and type(other) is not float:
+        if not isinstance(other, (int, float)):
             return NotImplemented
-        products = Positions()
-        for (x1, y1, z1) in self.as_meter_per_sec_sqrd():
-            products.append(x1 * other, y1 * other, z1 * other,
+        products = Accelerations()
+        for (x, y, z) in self.as_meter_per_sec_sqrd():
+            products.append(x * other, y * other, z * other,
                             enums.AccelerationUnits.METER_PER_SEC_SQRD)
         return products
+
+    __rmul__ = __mul__
+
+    def __str__(self):
+        """Return structure as multiline string."""
+        strings = []
+        for x, y, z in self._accelerations:
+            strings.append(f"{x:10.6f} {y:10.6f} {z:10.6f}")
+        return '\n'.join(strings)
+
+    def __repr__(self):
+        """Return object representation."""
+        return f"<Accelerations object with {len(self._accelerations)} atoms.>"
 
 
 class Forces:
     """
-    Extend a list to make x, y, z forces data easy to use.
+    Extend a list to make xyz forces data easy to use.
 
     Always store as Newtons
     """
@@ -421,68 +370,77 @@ class Forces:
     def append(self, x, y, z, units):
         """Append x, y, z as a tuple to the end of the list."""
         if units is enums.ForceUnits.NEWTON:
-            self._forces.append((x, y, z))
+            factor = 1
         elif units is enums.ForceUnits.DYNE:
-            x *= sc.DYNE_TO_NEWTON
-            y *= sc.DYNE_TO_NEWTON
-            z *= sc.DYNE_TO_NEWTON
-            self._forces.append((x, y, z))
+            factor = sc.DYNE_TO_NEWTON
         elif units is enums.ForceUnits.MILLIDYNE:
-            x *= sc.FROM_MILLI * sc.DYNE_TO_NEWTON
-            y *= sc.FROM_MILLI * sc.DYNE_TO_NEWTON
-            z *= sc.FROM_MILLI * sc.DYNE_TO_NEWTON
-            self._forces.append((x, y, z))
+            factor = sc.FROM_MILLI * sc.DYNE_TO_NEWTON
         elif units is enums.ForceUnits.HARTREE_PER_BOHR:
-            x *= sc.HARTREE_PER_BOHR_TO_NEWTON
-            y *= sc.HARTREE_PER_BOHR_TO_NEWTON
-            z *= sc.HARTREE_PER_BOHR_TO_NEWTON
-            self._forces.append((x, y, z))
+            factor = sc.HARTREE_PER_BOHR_TO_NEWTON
         else:
             raise ValueError(f"Unknown Force units: {units}")
+        self._forces.append(tuple(i * factor for i in (x, y, z)))
 
     def as_newton(self, index=None):
         """Return the entire list or specific index in newtons."""
         if index is None:
             return self._forces
-        else:
-            return self._forces[index]
+        return self._forces[index]
 
     def as_dyne(self, index=None):
         """Return the entire list or specific index in dyne."""
+        factor = sc.NEWTON_TO_DYNE
         if index is None:
-            conversion = list()
-            for (x, y, z) in self._forces:
-                conversion.append((x * sc.NEWTON_TO_DYNE,
-                                   y * sc.NEWTON_TO_DYNE,
-                                   z * sc.NEWTON_TO_DYNE))
-            return conversion
-        else:
-            return self._forces[index] * sc.NEWTON_TO_DYNE
+            return [tuple(i * factor for i in j) for j in self._forces]
+        return tuple(i * factor for i in self._forces[index])
 
     def as_millidyne(self, index=None):
         """Return the entire list or specific index in millidyne."""
+        factor = sc.NEWTON_TO_DYNE * sc.TO_MILLI
         if index is None:
-            conversion = list()
-            for x, y, z in self._forces:
-                x *= sc.NEWTON_TO_DYNE * sc.TO_MILLI
-                y *= sc.NEWTON_TO_DYNE * sc.TO_MILLI
-                z *= sc.NEWTON_TO_DYNE * sc.TO_MILLI
-                conversion.append((x, y, z))
-            return conversion
-        else:
-            return self._forces[index] * sc.NEWTON_TO_DYNE * sc.TO_MILLI
+            return [tuple(i * factor for i in j) for j in self._forces]
+        return tuple(i * factor for i in self._forces[index])
 
     def as_hartree_per_bohr(self, index=None):
         """Return the entire list or specific index in hartree/bohr."""
+        factor = sc.NEWTON_TO_HARTREE_PER_BOHR
         if index is None:
-            conversion = list()
-            for (x, y, z) in self._forces:
-                conversion.append((x * sc.NEWTON_TO_HARTREE_PER_BOHR,
-                                   y * sc.NEWTON_TO_HARTREE_PER_BOHR,
-                                   z * sc.NEWTON_TO_HARTREE_PER_BOHR))
-            return conversion
-        else:
-            return self._forces[index] * sc.NEWTON_TO_HARTREE_PER_BOHR
+            return [tuple(i * factor for i in j) for j in self._forces]
+        return tuple(i * factor for i in self._forces[index])
+
+    def __add__(self, other):
+        """Add operator functionality."""
+        if not isinstance(other, Forces):
+            return NotImplemented
+        total = Forces()
+        for (x1, y1, z1), (x2, y2, z2) in zip(self.as_newton(),
+                                              other.as_newton()):
+            total.append(x1 + x2, y1 + y2, z1 + z2,
+                         enums.ForceUnits.NEWTON)
+        return total
+
+    def __sub__(self, other):
+        """Subtraction operator functionality."""
+        if not isinstance(other, Forces):
+            return NotImplemented
+        difference = Forces()
+        for (x1, y1, z1), (x2, y2, z2) in zip(self.as_newton(),
+                                              other.as_newton()):
+            difference.append(x1 - x2, y1 - y2, z1 - z2,
+                              enums.ForceUnits.NEWTON)
+        return difference
+
+    def __mul__(self, other):
+        """Multiplication operator functionality."""
+        if not isinstance(other, (int, float)):
+            return NotImplemented
+        products = Forces()
+        for (x, y, z) in self.as_newton():
+            products.append(x * other, y * other, z * other,
+                            enums.ForceUnits.NEWTON)
+        return products
+
+    __rmul__ = __mul__
 
     def __str__(self):
         """Return structure as multiline string."""
@@ -495,44 +453,11 @@ class Forces:
         """Return object representation."""
         return f"<Forces object with {len(self._forces)} atoms.>"
 
-    def __add__(self, other):
-        """Add operator functionality."""
-        if type(other) is not Forces:
-            return NotImplemented
-        total = Forces()
-        for (x1, y1, z1), (x2, y2, z2) in zip(self.as_newton(),
-                                              other.as_newton()):
-            total.append(x1 + x2, y1 + y2, z1 + z2,
-                         enums.ForceUnits.NEWTON)
-        return total
-
-    def __sub__(self, other):
-        """Subtraction operator functionality."""
-        if type(other) is not Positions:
-            return NotImplemented
-        difference = Forces()
-        for (x1, y1, z1), (x2, y2, z2) in zip(self.as_newton(),
-                                              other.as_newton()):
-            difference.append(x1 - x2, y1 - y2, z1 - z2,
-                              enums.ForceUnits.NEWTON)
-        return difference
-
-    def __mul__(self, other):
-        """Multiplication operator functionality."""
-        if type(other) is not int or type(other) is not float:
-            return NotImplemented
-        products = Positions()
-        for (x1, y1, z1) in self.as_newton():
-            products.append(x1 * other, y1 * other, z1 * other,
-                            enums.ForceUnits.NEWTON)
-        return products
-
 
 class Frequencies:
     """
     Extend a list to make frequency data easy to use.
 
-    Stores modes and displacements.
     Always store as RECIP_CM
     """
 
@@ -547,16 +472,16 @@ class Frequencies:
     def append(self, frequency, units):
         """Append frequency to the end of the list."""
         if units is enums.FrequencyUnits.RECIP_CM:
-            self._frequencies.append(frequency)
+            factor = 1
         else:
             raise ValueError(f"Unknown frequency units: {units}")
+        self._frequencies.append(frequency * factor)
 
     def as_recip_cm(self, index=None):
         """Return the entire list or specific index in cm^-1."""
         if index is None:
             return self._frequencies
-        else:
-            return self._frequencies[index]
+        return self._frequencies[index]
 
     def __str__(self):
         """Return structure as multiline string."""
@@ -567,8 +492,8 @@ class Frequencies:
 
     def __repr__(self):
         """Return object representation."""
-        return f"<Frequency object with {len(self._frequencies)} " \
-               f"vibrational modes.>"
+        return (f"<Frequency object with {len(self._frequencies)} "
+                f"vibrational modes.>")
 
 
 class ForceConstants:
@@ -589,33 +514,27 @@ class ForceConstants:
     def append(self, force_constant, units):
         """Append force_constant to the end of the list."""
         if units is enums.ForceConstantUnits.NEWTON_PER_METER:
-            self._force_constants.append(force_constant)
+            factor = 1
         elif units is enums.ForceConstantUnits.MILLIDYNE_PER_ANGSTROM:
-            self._force_constants.append(force_constant * sc.FROM_MILLI
-                                         * sc.DYNE_TO_NEWTON
-                                         * (1 / sc.ANGSTROM_TO_METER))
+            factor = (sc.FROM_MILLI * sc.DYNE_TO_NEWTON
+                      * (1 / sc.ANGSTROM_TO_METER))
         else:
             raise ValueError(f"Unknown Force Constant Units: {units}")
+        self._force_constants.append(force_constant * factor)
 
     def as_newton_per_meter(self, index=None):
         """Return the entire list or specific index in N/m."""
         if index is None:
             return self._force_constants
-        else:
-            return self._force_constants[index]
+        return self._force_constants[index]
 
     def as_millidyne_per_angstrom(self, index=None):
         """Return the entire list or specific index in millidyne/angstrom."""
+        factor = (sc.FROM_MILLI * sc.DYNE_TO_NEWTON
+                  * (1 / sc.ANGSTROM_TO_METER))
         if index is None:
-            conversion = list()
-            for force_constant in self._force_constants:
-                conversion.append(force_constant * sc.TO_MILLI
-                                  * sc.NEWTON_TO_DYNE
-                                  * (1 / sc.METER_TO_ANGSTROM))
-            return conversion
-        else:
-            return (self._force_constants[index] * sc.TO_MILLI
-                    * sc.NEWTON_TO_DYNE * (1 / sc.METER_TO_ANGSTROM))
+            return [i * factor for i in self._force_constants]
+        return self._force_constants[index] * factor
 
     def __str__(self):
         """Return structure as multiline string."""
@@ -627,7 +546,7 @@ class ForceConstants:
     def __repr__(self):
         """Return object representation."""
         return (f"<ForceConstants object with {len(self._force_constants)} "
-                f"vibrational modes.>")
+                f"force constants.>")
 
 
 class Masses:
@@ -648,40 +567,34 @@ class Masses:
     def append(self, mass, units):
         """Append mass as a tuple to the end of the list."""
         if units is enums.MassUnits.AMU:
-            self._masses.append(mass)
+            factor = 1
         elif units is enums.MassUnits.KILOGRAMS:
-            self._masses.append(mass * sc.KG_TO_AMU)
+            factor = sc.KG_TO_AMU
         elif units is enums.MassUnits.GRAMS:
-            self._masses.append(mass * sc.TO_KILO * sc.KG_TO_AMU)
+            factor = sc.TO_KILO * sc.KG_TO_AMU
         else:
             raise ValueError(f"Unknown Mass Units: {units}")
+        self._masses.append(mass * factor)
 
     def as_amu(self, index=None):
         """Return the entire list or specific index in amu."""
         if index is None:
             return self._masses
-        else:
-            return self._masses[index]
+        return self._masses[index]
 
     def as_kilogram(self, index=None):
         """Return the entire list or specific index in kg."""
+        factor = sc.AMU_TO_KG
         if index is None:
-            conversion = list()
-            for mass in self._masses:
-                conversion.append(mass * sc.AMU_TO_KG)
-            return conversion
-        else:
-            return self._masses[index] * sc.AMU_TO_KG
+            return [i * factor for i in self._masses]
+        return self._masses[index] * factor
 
     def as_gram(self, index=None):
         """Return the entire list or specific index in grams."""
+        factor = sc.AMU_TO_KG * sc.FROM_KILO
         if index is None:
-            conversion = list()
-            for mass in self._masses:
-                conversion.append(mass * sc.AMU_TO_KG * sc.FROM_KILO)
-            return conversion
-        else:
-            return self._masses[index] * sc.AMU_TO_KG * sc.FROM_KILO
+            return [i * factor for i in self._masses]
+        return self._masses[index] * factor
 
     def __str__(self):
         """Return structure as multiline string."""
@@ -708,6 +621,8 @@ class Time:
             self.time = time
         elif unit is enums.TimeUnits.FEMTOSECOND:
             self.time = time * sc.FEMTOSECOND_TO_SECOND
+        else:
+            raise ValueError(f"Unknown Time units: {unit}")
 
     def as_second(self):
         """Return the value in seconds."""
@@ -744,67 +659,57 @@ class Energies:
     def append(self, energy, units):
         """Append energy to the end of the list."""
         if units is enums.EnergyUnits.JOULE:
-            self._energies.append(energy)
+            factor = 1
         elif units is enums.EnergyUnits.KCAL_PER_MOLE:
-            self._energies.append(energy * sc.KCAL_PER_MOLE_TO_JOULE)
+            factor = sc.KCAL_PER_MOLE_TO_JOULE
         elif units is enums.EnergyUnits.MILLIDYNE_ANGSTROM:
-            self._energies.append(energy * sc.MILLIDYNE_ANGSTROM_TO_JOULE)
+            factor = sc.MILLIDYNE_ANGSTROM_TO_JOULE
         elif units is enums.EnergyUnits.HARTREE:
-            self._energies.append(energy * sc.HARTREE_TO_JOULE)
+            factor = sc.HARTREE_TO_JOULE
         else:
             raise ValueError(f"Unknown Energy Units: {units}")
+        self._energies.append(energy * factor)
 
     def alter_energy(self, index, energy, units):
         """Set the energy at index to new value."""
-        if index >= len(self._energies):
-            raise IndexError("Position to be altered is outside range.")
         if units is enums.EnergyUnits.JOULE:
-            self._energies[index] = energy
+            factor = 1
         elif units is enums.EnergyUnits.KCAL_PER_MOLE:
-            self._energies[index] = energy * sc.KCAL_PER_MOLE_TO_JOULE
+            factor = sc.KCAL_PER_MOLE_TO_JOULE
         elif units is enums.EnergyUnits.MILLIDYNE_ANGSTROM:
-            self._energies[index] = energy * sc.MILLIDYNE_ANGSTROM_TO_JOULE
+            factor = sc.MILLIDYNE_ANGSTROM_TO_JOULE
         elif units is enums.EnergyUnits.HARTREE:
-            self._energies[index] = energy * sc.HARTREE_TO_JOULE
+            factor = sc.HARTREE_TO_JOULE
         else:
             raise ValueError(f"Unknown Energy Units: {units}")
+        self._energies[index] = energy * factor
 
     def as_joules(self, index=None):
         """Return the entire list or specific index in joules."""
         if index is None:
             return self._energies
-        else:
-            return self._energies[index]
+        return self._energies[index]
 
     def as_kcal_per_mole(self, index=None):
         """Return the entire list or specific index in kcal/mol."""
+        factor = sc.JOULE_TO_KCAL_PER_MOLE
         if index is None:
-            conversion = list()
-            for energy in self._energies:
-                conversion.append(energy * sc.JOULE_TO_KCAL_PER_MOLE)
-            return conversion
-        else:
-            return self._energies[index] * sc.JOULE_TO_KCAL_PER_MOLE
+            return [i * factor for i in self._energies]
+        return self._energies[index] * factor
 
     def as_millidyne_angstrom(self, index=None):
         """Return the entire list or specific index in mdyne*angstrom."""
+        factor = sc.JOULE_TO_MILLIDYNE_ANGSTROM
         if index is None:
-            conversion = list()
-            for energy in self._energies:
-                conversion.append(energy * sc.JOULE_TO_MILLIDYNE_ANGSTROM)
-            return conversion
-        else:
-            return self._energies[index] * sc.JOULE_TO_MILLIDYNE_ANGSTROM
+            return [i * factor for i in self._energies]
+        return self._energies[index] * factor
 
     def as_hartree(self, index=None):
         """Return the entire list or specific index in hartrees."""
+        factor = sc.JOULE_TO_HARTREE
         if index is None:
-            conversion = list()
-            for energy in self._energies:
-                conversion.append(energy * sc.JOULE_TO_HARTREE)
-            return conversion
-        else:
-            return self._energies[index] * sc.JOULE_TO_HARTREE
+            return [i * factor for i in self._energies]
+        return self._energies[index] * factor
 
     def __str__(self):
         """Return structure as multiline string."""

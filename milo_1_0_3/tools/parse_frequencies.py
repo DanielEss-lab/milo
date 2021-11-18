@@ -10,11 +10,11 @@ request this with '# freq=(hpmodes) ... '.
 import argparse
 import sys
 
-from milo_1_0_2 import atom
-from milo_1_0_2 import containers
-from milo_1_0_2 import enumerations as enums
-from milo_1_0_2 import exceptions
-from milo_1_0_2 import program_state as ps
+from milo_1_0_3 import atom
+from milo_1_0_3 import containers
+from milo_1_0_3 import enumerations as enums
+from milo_1_0_3 import exceptions
+from milo_1_0_3 import program_state as ps
 
 
 def main():

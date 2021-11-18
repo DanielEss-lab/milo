@@ -178,7 +178,7 @@ def make_submission_script(job_name, time_string, memory, procs, g09_flag):
             file.write('module load g09\n')
         else:
             file.write('module load g16\n')
-        file.write('python -m milo_1_0_2 < "$JOB_NAME.in" > ')
+        file.write('python -m milo_1_0_3 < "$JOB_NAME.in" > ')
         file.write('"$JOB_NAME.out" &\n')
         file.write('pid=$!\n')
         file.write('# Associate the function "cleanup" with the TERM signal, '
