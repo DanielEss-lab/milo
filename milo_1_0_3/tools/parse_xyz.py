@@ -7,8 +7,7 @@ import os
 
 def main():
     """Serve as main."""
-    out_files = [f for f in os.listdir('.') if os.path.isfile(f) and
-                 f.endswith('.out')]
+    out_files = [f for f in os.listdir(".") if os.path.isfile(f) and f.endswith(".out")]
 
     for out_file in out_files:
         with open(out_file, mode="r") as out_reader:

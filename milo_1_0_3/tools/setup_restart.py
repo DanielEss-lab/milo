@@ -17,17 +17,30 @@ from milo_1_0_3 import program_state as ps
 
 def main():
     """Parse frequency file and print to new Milo input."""
-    parser = argparse.ArgumentParser(description="Make a Milo input file "
-                                     "to restart a job from the last completed"
-                                     " step.")
-    parser.add_argument('job_to_restart', nargs='?',
-                        type=argparse.FileType('r'), default=sys.stdin,
-                        help="Milo output file. <stdin> by default.")
-    parser.add_argument('new_input_filename', nargs='?',
-                        type=argparse.FileType('w'), default=sys.stdout,
-                        help="New Milo input file. <stdout> by default.")
-    parser.add_argument("--no_script", action="store_true",
-                        help="Stops SLURM submission scripts from being made.")
+    parser = argparse.ArgumentParser(
+        description="Make a Milo input file "
+        "to restart a job from the last completed"
+        " step."
+    )
+    parser.add_argument(
+        "job_to_restart",
+        nargs="?",
+        type=argparse.FileType("r"),
+        default=sys.stdin,
+        help="Milo output file. <stdin> by default.",
+    )
+    parser.add_argument(
+        "new_input_filename",
+        nargs="?",
+        type=argparse.FileType("w"),
+        default=sys.stdout,
+        help="New Milo input file. <stdout> by default.",
+    )
+    parser.add_argument(
+        "--no_script",
+        action="store_true",
+        help="Stops SLURM submission scripts from being made.",
+    )
     args = parser.parse_args()
 
     # Get ### Input File section from output file
@@ -44,7 +57,7 @@ def main():
     # Parse the old input into program_state, w/o printing input_parser output
     program_state = ps.ProgramState()
     stdout = sys.stdout
-    null_output = open(os.devnull, 'w')
+    null_output = open(os.devnull, "w")
     sys.stdout = null_output
     input_parser.parse_input(old_input, program_state)
     sys.stdout = stdout
@@ -83,24 +96,37 @@ def main():
                 current_velocities.append(next(args.job_to_restart, None))
 
     # Remove atom labels from velocities section
-    completed_velocities = [line.split(maxsplit=1)[1].rjust(50)
-                            for line in completed_velocities]
+    completed_velocities = [
+        line.split(maxsplit=1)[1].rjust(50) for line in completed_velocities
+    ]
 
     # Output
-    print_section(args.new_input_filename, "comment",
-        get_output_comment(args.job_to_restart, completed_step_number))
-    print_section(args.new_input_filename, "job", get_job_section(old_input,
-        completed_step_number, random_seed))
-    print_section(args.new_input_filename, "molecule",
-        "".join([f"    {program_state.charge} {program_state.spin}\n"]
-        + completed_coordinates))
-    print_section(args.new_input_filename, "isotope",
-        get_isotope_section(program_state))
-    print_section(args.new_input_filename, "velocities",
-        "".join(completed_velocities))
+    print_section(
+        args.new_input_filename,
+        "comment",
+        get_output_comment(args.job_to_restart, completed_step_number),
+    )
+    print_section(
+        args.new_input_filename,
+        "job",
+        get_job_section(old_input, completed_step_number, random_seed),
+    )
+    print_section(
+        args.new_input_filename,
+        "molecule",
+        "".join(
+            [f"    {program_state.charge} {program_state.spin}\n"]
+            + completed_coordinates
+        ),
+    )
+    print_section(
+        args.new_input_filename, "isotope", get_isotope_section(program_state)
+    )
+    print_section(args.new_input_filename, "velocities", "".join(completed_velocities))
     if program_state.gaussian_footer is not None:
-        print_section(args.new_input_filename, "gaussian_footer",
-            program_state.gaussian_footer)
+        print_section(
+            args.new_input_filename, "gaussian_footer", program_state.gaussian_footer
+        )
 
 
 def get_job_section(old_input, current_step, random_seed):
@@ -127,8 +153,7 @@ def get_isotope_section(program_state):
     """Create isotope section."""
     section = list()
     for i in range(program_state.number_atoms):
-        section.append(f"    {(i + 1):< 3d} "
-                       f"{program_state.atoms[i].mass:10.5f}\n")
+        section.append(f"    {(i + 1):< 3d} " f"{program_state.atoms[i].mass:10.5f}\n")
     return "".join(section)
 
 
@@ -142,7 +167,7 @@ def get_output_comment(input_iterable, current_step):
         line.append(os.path.basename(input_iterable.name))
     else:
         try:
-            name = os.readlink('/proc/self/fd/0').split('/')[-1].split('.')[0]
+            name = os.readlink("/proc/self/fd/0").split("/")[-1].split(".")[0]
             line.append(name)
         except FileNotFoundError:
             line.append("unknown_job")

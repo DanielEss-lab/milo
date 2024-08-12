@@ -8,15 +8,18 @@ from milo_1_0_3 import enumerations as enums
 
 def get_propagation_handler(program_state):
     """Return the correct propagation handler class based on program state."""
-    if program_state.propagation_algorithm is \
-            enums.PropagationAlgorithm.VERLET:
+    if program_state.propagation_algorithm is enums.PropagationAlgorithm.VERLET:
         return Verlet
-    elif program_state.propagation_algorithm is \
-            enums.PropagationAlgorithm.VELOCITY_VERLET:
+    elif (
+        program_state.propagation_algorithm
+        is enums.PropagationAlgorithm.VELOCITY_VERLET
+    ):
         return VelocityVerlet
     else:
-        raise ValueError(f"Unknown force propagation algorithm:"
-                         f"{program_state.propagation_algorithm}")
+        raise ValueError(
+            f"Unknown force propagation algorithm:"
+            f"{program_state.propagation_algorithm}"
+        )
 
 
 class ForcePropagationHandler:
@@ -26,17 +29,20 @@ class ForcePropagationHandler:
     def _calculate_acceleration(program_state):
         """Calculate acceleration with F = m*a."""
         acceleration = containers.Accelerations.from_forces(
-            program_state.forces[-1], program_state.atoms)
+            program_state.forces[-1], program_state.atoms
+        )
         program_state.accelerations.append(acceleration)
 
     @staticmethod
     def _calculate_velocity(program_state):
         """Calculate velocity with v(n) = v(n-1) + 1/2*(a(n-1) + a(n))*dt."""
-        velocity = (program_state.velocities[-1] +
-                    (containers.Velocities.from_acceleration(
-                        (program_state.accelerations[-1] +
-                            program_state.accelerations[-2]),
-                        program_state.step_size) * 0.5))
+        velocity = program_state.velocities[-1] + (
+            containers.Velocities.from_acceleration(
+                (program_state.accelerations[-1] + program_state.accelerations[-2]),
+                program_state.step_size,
+            )
+            * 0.5
+        )
         program_state.velocities.append(velocity)
 
 
@@ -70,20 +76,27 @@ class Verlet(ForcePropagationHandler):
 
         # Calculate x(n) using one of the equations above
         if len(program_state.structures) == 1:
-            structure = (program_state.structures[-1] +
-                         containers.Positions.from_velocity(
-                             program_state.velocities[-1],
-                             program_state.step_size) +
-                         (containers.Positions.from_acceleration(
-                             program_state.accelerations[-1],
-                             program_state.step_size) * 0.5))
+            structure = (
+                program_state.structures[-1]
+                + containers.Positions.from_velocity(
+                    program_state.velocities[-1], program_state.step_size
+                )
+                + (
+                    containers.Positions.from_acceleration(
+                        program_state.accelerations[-1], program_state.step_size
+                    )
+                    * 0.5
+                )
+            )
             program_state.structures.append(structure)
         elif len(program_state.structures) >= 2:
-            structure = ((program_state.structures[-1] * 2) -
-                         program_state.structures[-2] +
-                         containers.Positions.from_acceleration(
-                             program_state.accelerations[-1],
-                             program_state.step_size))
+            structure = (
+                (program_state.structures[-1] * 2)
+                - program_state.structures[-2]
+                + containers.Positions.from_acceleration(
+                    program_state.accelerations[-1], program_state.step_size
+                )
+            )
             program_state.structures.append(structure)
 
 
@@ -114,11 +127,16 @@ class VelocityVerlet(ForcePropagationHandler):
             cls._calculate_velocity(program_state)
 
         # Calculate x(n) using equation above
-        structure = (program_state.structures[-1] +
-                     containers.Positions.from_velocity(
-                         program_state.velocities[-1],
-                         program_state.step_size) +
-                     (containers.Positions.from_acceleration(
-                         program_state.accelerations[-1],
-                         program_state.step_size) * 0.5))
+        structure = (
+            program_state.structures[-1]
+            + containers.Positions.from_velocity(
+                program_state.velocities[-1], program_state.step_size
+            )
+            + (
+                containers.Positions.from_acceleration(
+                    program_state.accelerations[-1], program_state.step_size
+                )
+                * 0.5
+            )
+        )
         program_state.structures.append(structure)

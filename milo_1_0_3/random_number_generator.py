@@ -7,7 +7,7 @@ import os
 import random
 
 
-class RandomNumberGenerator():
+class RandomNumberGenerator:
     """
     Provide extended functionality from standard random.
 
@@ -30,14 +30,13 @@ class RandomNumberGenerator():
         self.seed = seed
         if self.seed is None:
             try:
-                self.seed = int.from_bytes(os.urandom(5),
-                                           byteorder='big', signed=False)
+                self.seed = int.from_bytes(os.urandom(5), byteorder="big", signed=False)
             except NotImplementedError:
                 import time
+
                 current_time = str(int(time.time()))
                 process_id = str(os.getpid())
-                self.seed = int(process_id
-                                + current_time[-(12 - len(process_id)):])
+                self.seed = int(process_id + current_time[-(12 - len(process_id)) :])
         self.rng = random.Random(self.seed)
 
     def reset_seed(self, seed=None):

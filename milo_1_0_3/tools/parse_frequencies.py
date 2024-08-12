@@ -19,18 +19,33 @@ from milo_1_0_3 import program_state as ps
 
 def main():
     """Parse frequency file and print to new Milo input."""
-    parser = argparse.ArgumentParser(description="Make a Milo input file "
-                                     "from a high-precision Gaussian frequency"
-                                     " calculation.\n")
-    parser.add_argument('infile', nargs='?', type=argparse.FileType('r'),
-                        default=sys.stdin, help="Frequency calculation file. "
-                        "<stdin> by default.")
-    parser.add_argument('outfile', nargs='?', type=argparse.FileType('w'),
-                        default=sys.stdout, help="New Milo input file. "
-                        "<stdout> by default.")
-    parser.add_argument('-v', '--verbose', action='count', default=0,
-                        help="Print other parameters in $job section. "
-                        "-v for common parameters, -vv for all parameters")
+    parser = argparse.ArgumentParser(
+        description="Make a Milo input file "
+        "from a high-precision Gaussian frequency"
+        " calculation.\n"
+    )
+    parser.add_argument(
+        "infile",
+        nargs="?",
+        type=argparse.FileType("r"),
+        default=sys.stdin,
+        help="Frequency calculation file. " "<stdin> by default.",
+    )
+    parser.add_argument(
+        "outfile",
+        nargs="?",
+        type=argparse.FileType("w"),
+        default=sys.stdout,
+        help="New Milo input file. " "<stdout> by default.",
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="count",
+        default=0,
+        help="Print other parameters in $job section. "
+        "-v for common parameters, -vv for all parameters",
+    )
     args = parser.parse_args()
     program_state = ps.ProgramState()
     try:
@@ -74,12 +89,18 @@ def parse_gaussian_header(input_iterable, program_state):
                 lines.append(next_line[1:].strip("\n"))
             clean_line = "".join(lines).strip()
             if "hpmodes" not in clean_line.casefold():
-                raise exceptions.InputError("Must be high-precision frequency "
-                                            "calculation. Use 'freq=hpmodes'.")
+                raise exceptions.InputError(
+                    "Must be high-precision frequency "
+                    "calculation. Use 'freq=hpmodes'."
+                )
             tokens = clean_line.split()
-            tokens = [x for x in tokens if "#" not in x
-                      and "opt" not in x.casefold()
-                      and "freq" not in x.casefold()]
+            tokens = [
+                x
+                for x in tokens
+                if "#" not in x
+                and "opt" not in x.casefold()
+                and "freq" not in x.casefold()
+            ]
             program_state.gaussian_header = " ".join(tokens)
             return
     raise exceptions.InputError("Error parsing gaussian_header.")
@@ -124,8 +145,10 @@ def parse_gaussian_molecule_data(input_iterable, program_state):
         if "Input orientation:" in line or "Standard orientation:" in line:
             positions = containers.Positions()
             for coordinate_line in input_iterable:
-                if ("Rotational constants" in coordinate_line or
-                        "Distance matrix" in coordinate_line):
+                if (
+                    "Rotational constants" in coordinate_line
+                    or "Distance matrix" in coordinate_line
+                ):
                     break
                 coordinates = coordinate_line.split()
                 if coordinates[0].isnumeric():
@@ -166,31 +189,36 @@ def parse_gaussian_frequency_data(input_iterable, program_state):
         if "Frequencies ---" in line:
             has_started = True
             for frequency in line.split()[2:]:
-                program_state.frequencies.append(float(frequency),
-                                                 enums.FrequencyUnits
-                                                 .RECIP_CM)
+                program_state.frequencies.append(
+                    float(frequency), enums.FrequencyUnits.RECIP_CM
+                )
         elif "Reduced masses ---" in line:
             for reduced_mass in line.split()[3:]:
-                program_state.reduced_masses\
-                    .append(float(reduced_mass), enums.MassUnits.AMU)
+                program_state.reduced_masses.append(
+                    float(reduced_mass), enums.MassUnits.AMU
+                )
         elif "Force constants ---" in line:
             for force_constant in line.split()[3:]:
-                program_state.force_constants\
-                    .append(float(force_constant), enums.ForceConstantUnits
-                            .MILLIDYNE_PER_ANGSTROM)
+                program_state.force_constants.append(
+                    float(force_constant),
+                    enums.ForceConstantUnits.MILLIDYNE_PER_ANGSTROM,
+                )
         elif "Coord Atom Element:" in line:
             data_in_columns = list()
             for coordinate_line in input_iterable:
-                if ("Harmonic frequencies (cm**-1)" in coordinate_line
-                        or "                    " in coordinate_line):
+                if (
+                    "Harmonic frequencies (cm**-1)" in coordinate_line
+                    or "                    " in coordinate_line
+                ):
                     break
                 data_in_columns.append(coordinate_line.split()[3:])
             data_in_rows = list(zip(*data_in_columns))
             for frequency in data_in_rows:
                 program_state.mode_displacements.append(containers.Positions())
                 for x, y, z in zip(*[iter(frequency)] * 3):
-                    program_state.mode_displacements[-1].append(float(x),
-                        float(y), float(z), enums.DistanceUnits.ANGSTROM)
+                    program_state.mode_displacements[-1].append(
+                        float(x), float(y), float(z), enums.DistanceUnits.ANGSTROM
+                    )
         elif has_started and "activities (A**4/AMU)" in line:
             return
     raise exceptions.InputError("Error parsing frequency data.")
@@ -246,18 +274,17 @@ def print_job_section(output_iterable, program_state, verbose):
     verbose controls how other job parameters are printed.
     """
     section = list()
-    section.append("    gaussian_header         "
-                   f"{program_state.gaussian_header}")
+    section.append("    gaussian_header         " f"{program_state.gaussian_header}")
     if verbose >= 1:
         section.append("    # step_size               1.00  # in femtoseconds")
         section.append("    # max_steps               100  # or no_limit")
         section.append("    # temperature             298.15  # in kelvin")
-        section.append("    # phase                   bring_together n m"
-                       "  #  or  push_apart n m")
+        section.append(
+            "    # phase                   bring_together n m" "  #  or  push_apart n m"
+        )
         section.append("    # memory                  24  # in GB")
         section.append("    # processors              24")
-        section.append("    # random_seed             generate  # or an "
-                       "integer")
+        section.append("    # random_seed             generate  # or an " "integer")
     if verbose >= 2:
         section.append("    # oscillator_type         quasiclassical")
         section.append("    # geometry_displacement   off")
@@ -273,8 +300,9 @@ def print_molecule_section(output_iterable, program_state):
     """Print $molecule section with data from program_state."""
     section = list()
     section.append(f"    {program_state.charge} {program_state.spin}")
-    for _atom, (x, y, z) in zip(program_state.atoms,
-                               program_state.input_structure.as_angstrom()):
+    for _atom, (x, y, z) in zip(
+        program_state.atoms, program_state.input_structure.as_angstrom()
+    ):
         section.append(f"    {_atom.symbol} {x:12.6f} {y:12.6f} {z:12.6f}")
     print_section(output_iterable, "molecule", "\n".join(section))
 
@@ -288,12 +316,14 @@ def print_frequency_data_section(output_iterable, program_state):
     """Print $frequencies section with data from program_state."""
     section = list()
     for frequency, reduced_mass, force_constant, mode_displacement in zip(
-            program_state.frequencies.as_recip_cm(),
-            program_state.reduced_masses.as_amu(),
-            program_state.force_constants.as_millidyne_per_angstrom(),
-            program_state.mode_displacements):
-        section.append(f"   {frequency:10.4f} {reduced_mass:7.4f} "
-                       f"{force_constant:7.4f}")
+        program_state.frequencies.as_recip_cm(),
+        program_state.reduced_masses.as_amu(),
+        program_state.force_constants.as_millidyne_per_angstrom(),
+        program_state.mode_displacements,
+    ):
+        section.append(
+            f"   {frequency:10.4f} {reduced_mass:7.4f} " f"{force_constant:7.4f}"
+        )
         for x, y, z in mode_displacement.as_angstrom():
             section.append(f"  {x:8.5f} {y:8.5f} {z:8.5f}")
         section.append("\n")
@@ -314,7 +344,7 @@ def print_output_comment(input_iterable, output_iterable):
         comment.append(" ")
     else:
         try:
-            name = os.readlink('/proc/self/fd/0').split('/')[-1].split('.')[0]
+            name = os.readlink("/proc/self/fd/0").split("/")[-1].split(".")[0]
             comment.append("from ")
             comment.append(name)
             comment.append(" ")

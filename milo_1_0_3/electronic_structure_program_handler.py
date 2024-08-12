@@ -16,8 +16,9 @@ def get_program_handler(program_state):
     elif program_state.program_id is enums.ProgramID.GAUSSIAN_09:
         return Gaussian09Handler
     else:
-        raise ValueError(f'Unknown electronic structure program '
-                         f'"{program_state.program_id}"')
+        raise ValueError(
+            f"Unknown electronic structure program " f'"{program_state.program_id}"'
+        )
 
 
 class GaussianHandler:
@@ -29,10 +30,11 @@ class GaussianHandler:
     def generate_forces(cls, program_state):
         """Preform computation and append forces to list in program state."""
         route_section = f"# force {program_state.gaussian_header}"
-        log_file = cls.call_gaussian(route_section,
-                                     f"{cls.gaussian_command}"
-                                     f"_{program_state.current_step}",
-                                     program_state)
+        log_file = cls.call_gaussian(
+            route_section,
+            f"{cls.gaussian_command}" f"_{program_state.current_step}",
+            program_state,
+        )
         cls.parse_forces(log_file, program_state)
 
     @classmethod
@@ -47,23 +49,20 @@ class GaussianHandler:
     @staticmethod
     def prepare_com_file(file_name, route_section, program_state):
         """Prepare a .com file for a Gaussian run."""
-        with open(file_name, 'w') as com_file:
+        with open(file_name, "w") as com_file:
             if program_state.processor_count is not None:
-                com_file.write(f"%nprocshared="
-                               f"{program_state.processor_count}\n")
+                com_file.write(f"%nprocshared=" f"{program_state.processor_count}\n")
             if program_state.memory_amount is not None:
-                com_file.write(f"%mem="
-                               f"{program_state.memory_amount}gb\n")
+                com_file.write(f"%mem=" f"{program_state.memory_amount}gb\n")
             com_file.write(f"{route_section}\n\n")
-            com_file.write(f"Calculation for time step: "
-                           f"{program_state.current_step}\n\n")
-            com_file.write(f" {program_state.charge}"
-                           f" {program_state.spin}\n")
-            for atom, (x, y, z) in zip(program_state.atoms,
-                                       program_state.structures[-1]
-                                       .as_angstrom()):
-                com_file.write(f"  {atom.symbol} {x:10.6f} {y:10.6f} "
-                               f"{z:10.6f}\n")
+            com_file.write(
+                f"Calculation for time step: " f"{program_state.current_step}\n\n"
+            )
+            com_file.write(f" {program_state.charge}" f" {program_state.spin}\n")
+            for atom, (x, y, z) in zip(
+                program_state.atoms, program_state.structures[-1].as_angstrom()
+            ):
+                com_file.write(f"  {atom.symbol} {x:10.6f} {y:10.6f} " f"{z:10.6f}\n")
             com_file.write("\n")
             if program_state.gaussian_footer is not None:
                 com_file.write(program_state.gaussian_footer)
@@ -75,7 +74,8 @@ class GaussianHandler:
         if not cls.is_log_good(log_file_name):
             raise exceptions.ElectronicStructureProgramError(
                 "Gaussian force calculation log file was not valid. Gaussian "
-                "returned an error or could not be called correctly.")
+                "returned an error or could not be called correctly."
+            )
         forces = containers.Forces()
         energy = containers.Energies()
         with open(log_file_name) as log_file:
@@ -102,8 +102,9 @@ class GaussianHandler:
                                 x = float(tokens[2])
                                 y = float(tokens[3])
                                 z = float(tokens[4])
-                                forces.append(x, y, z,
-                                    enums.ForceUnits.HARTREE_PER_BOHR)
+                                forces.append(
+                                    x, y, z, enums.ForceUnits.HARTREE_PER_BOHR
+                                )
 
     @staticmethod
     def is_log_good(log_file_name):

@@ -73,15 +73,17 @@ class Positions:
 
         Δx = v * Δt
         """
-        if not (isinstance(velocities, Velocities) and
-                isinstance(change_in_time, Time)):
-            raise TypeError(f"Cannot create Positions object from "
-                f"'{type(velocities)}' and '{type(change_in_time)}'.")
+        if not (
+            isinstance(velocities, Velocities) and isinstance(change_in_time, Time)
+        ):
+            raise TypeError(
+                f"Cannot create Positions object from "
+                f"'{type(velocities)}' and '{type(change_in_time)}'."
+            )
         displacement = cls()
         dt = change_in_time.as_second()
-        for (x, y, z) in velocities.as_meter_per_sec():
-            displacement.append(x * dt, y * dt, z * dt,
-                                units=enums.DistanceUnits.METER)
+        for x, y, z in velocities.as_meter_per_sec():
+            displacement.append(x * dt, y * dt, z * dt, units=enums.DistanceUnits.METER)
         return displacement
 
     @classmethod
@@ -91,15 +93,19 @@ class Positions:
 
         Δx = a*Δt^2
         """
-        if not (isinstance(acceleration, Accelerations) and
-                isinstance(change_in_time, Time)):
-            raise TypeError(f"cannot create Positions object from "
-                f"'{type(acceleration)}' and '{type(change_in_time)}'")
+        if not (
+            isinstance(acceleration, Accelerations) and isinstance(change_in_time, Time)
+        ):
+            raise TypeError(
+                f"cannot create Positions object from "
+                f"'{type(acceleration)}' and '{type(change_in_time)}'"
+            )
         displacement = cls()
         dt2 = change_in_time.as_second() ** 2
-        for (x, y, z) in acceleration.as_meter_per_sec_sqrd():
-            displacement.append(x * dt2, y * dt2, z * dt2,
-                                units=enums.DistanceUnits.METER)
+        for x, y, z in acceleration.as_meter_per_sec_sqrd():
+            displacement.append(
+                x * dt2, y * dt2, z * dt2, units=enums.DistanceUnits.METER
+            )
         return displacement
 
     def __add__(self, other):
@@ -107,10 +113,8 @@ class Positions:
         if not isinstance(other, Positions):
             return NotImplemented
         total = Positions()
-        for (x1, y1, z1), (x2, y2, z2) in zip(self.as_angstrom(),
-                                              other.as_angstrom()):
-            total.append(x1 + x2, y1 + y2, z1 + z2,
-                         enums.DistanceUnits.ANGSTROM)
+        for (x1, y1, z1), (x2, y2, z2) in zip(self.as_angstrom(), other.as_angstrom()):
+            total.append(x1 + x2, y1 + y2, z1 + z2, enums.DistanceUnits.ANGSTROM)
         return total
 
     def __sub__(self, other):
@@ -118,10 +122,8 @@ class Positions:
         if not isinstance(other, Positions):
             return NotImplemented
         difference = Positions()
-        for (x1, y1, z1), (x2, y2, z2) in zip(self.as_angstrom(),
-                                              other.as_angstrom()):
-            difference.append(x1 - x2, y1 - y2, z1 - z2,
-                              enums.DistanceUnits.ANGSTROM)
+        for (x1, y1, z1), (x2, y2, z2) in zip(self.as_angstrom(), other.as_angstrom()):
+            difference.append(x1 - x2, y1 - y2, z1 - z2, enums.DistanceUnits.ANGSTROM)
         return difference
 
     def __mul__(self, other):
@@ -129,9 +131,10 @@ class Positions:
         if not isinstance(other, (int, float)):
             return NotImplemented
         products = Positions()
-        for (x, y, z) in self.as_angstrom():
-            products.append(x * other, y * other, z * other,
-                            enums.DistanceUnits.ANGSTROM)
+        for x, y, z in self.as_angstrom():
+            products.append(
+                x * other, y * other, z * other, enums.DistanceUnits.ANGSTROM
+            )
         return products
 
     __rmul__ = __mul__
@@ -141,7 +144,7 @@ class Positions:
         strings = []
         for x, y, z in self._positions:
             strings.append(f"{x:10.6f} {y:10.6f} {z:10.6f}")
-        return '\n'.join(strings)
+        return "\n".join(strings)
 
     def __repr__(self):
         """Return object representation."""
@@ -183,7 +186,7 @@ class Velocities:
 
     def as_angstrom_per_fs(self, index=None):
         """Return the entire list or specific index in angstrom/fs."""
-        factor = (sc.METER_TO_ANGSTROM * (1 / sc.SECOND_TO_FEMTOSECOND))
+        factor = sc.METER_TO_ANGSTROM * (1 / sc.SECOND_TO_FEMTOSECOND)
         if index is None:
             return [tuple(i * factor for i in j) for j in self._velocities]
         return tuple(i * factor for i in self._velocities[index])
@@ -202,15 +205,19 @@ class Velocities:
 
         Δv = a*Δt
         """
-        if not (isinstance(acceleration, Accelerations) and
-                isinstance(change_in_time, Time)):
-            raise TypeError(f"Cannot create Velocities object from "
-                f"'{type(acceleration)}' and '{type(change_in_time)}'.")
+        if not (
+            isinstance(acceleration, Accelerations) and isinstance(change_in_time, Time)
+        ):
+            raise TypeError(
+                f"Cannot create Velocities object from "
+                f"'{type(acceleration)}' and '{type(change_in_time)}'."
+            )
         displacement = cls()
         dt = change_in_time.as_second()
-        for (x, y, z) in acceleration.as_meter_per_sec_sqrd():
-            displacement.append(x * dt, y * dt, z * dt,
-                                units=enums.VelocityUnits.METER_PER_SEC)
+        for x, y, z in acceleration.as_meter_per_sec_sqrd():
+            displacement.append(
+                x * dt, y * dt, z * dt, units=enums.VelocityUnits.METER_PER_SEC
+            )
         return displacement
 
     def __add__(self, other):
@@ -218,10 +225,10 @@ class Velocities:
         if not isinstance(other, Velocities):
             return NotImplemented
         total = Velocities()
-        for (x1, y1, z1), (x2, y2, z2) in zip(self.as_meter_per_sec(),
-                                              other.as_meter_per_sec()):
-            total.append(x1 + x2, y1 + y2, z1 + z2,
-                         enums.VelocityUnits.METER_PER_SEC)
+        for (x1, y1, z1), (x2, y2, z2) in zip(
+            self.as_meter_per_sec(), other.as_meter_per_sec()
+        ):
+            total.append(x1 + x2, y1 + y2, z1 + z2, enums.VelocityUnits.METER_PER_SEC)
         return total
 
     def __sub__(self, other):
@@ -229,10 +236,12 @@ class Velocities:
         if not isinstance(other, Velocities):
             return NotImplemented
         difference = Velocities()
-        for (x1, y1, z1), (x2, y2, z2) in zip(self.as_meter_per_sec(),
-                                              other.as_meter_per_sec()):
-            difference.append(x1 - x2, y1 - y2, z1 - z2,
-                              enums.VelocityUnits.METER_PER_SEC)
+        for (x1, y1, z1), (x2, y2, z2) in zip(
+            self.as_meter_per_sec(), other.as_meter_per_sec()
+        ):
+            difference.append(
+                x1 - x2, y1 - y2, z1 - z2, enums.VelocityUnits.METER_PER_SEC
+            )
         return difference
 
     def __mul__(self, other):
@@ -240,9 +249,10 @@ class Velocities:
         if not isinstance(other, (int, float)):
             return NotImplemented
         products = Velocities()
-        for (x, y, z) in self.as_meter_per_sec():
-            products.append(x * other, y * other, z * other,
-                            enums.VelocityUnits.METER_PER_SEC)
+        for x, y, z in self.as_meter_per_sec():
+            products.append(
+                x * other, y * other, z * other, enums.VelocityUnits.METER_PER_SEC
+            )
         return products
 
     __rmul__ = __mul__
@@ -252,7 +262,7 @@ class Velocities:
         strings = []
         for x, y, z in self._velocities:
             strings.append(f"{x:10.6f} {y:10.6f} {z:10.6f}")
-        return '\n'.join(strings)
+        return "\n".join(strings)
 
     def __repr__(self):
         """Return object representation."""
@@ -295,15 +305,21 @@ class Accelerations:
 
         F = ma --> a = F / m
         """
-        if not (isinstance(forces, Forces) and isinstance(atoms, list) and
-                isinstance(atoms[0], atom.Atom)):
-            raise TypeError(f"Cannot create Accelerations object from"
-                f"'{type(forces)}' and '{type(atoms)}'.")
+        if not (
+            isinstance(forces, Forces)
+            and isinstance(atoms, list)
+            and isinstance(atoms[0], atom.Atom)
+        ):
+            raise TypeError(
+                f"Cannot create Accelerations object from"
+                f"'{type(forces)}' and '{type(atoms)}'."
+            )
         accelerations = cls()
         atom_masses_kg = [element.mass * sc.AMU_TO_KG for element in atoms]
         for mass, (x, y, z) in zip(atom_masses_kg, forces.as_newton()):
-            accelerations.append(x / mass, y / mass, z / mass,
-                                 enums.AccelerationUnits.METER_PER_SEC_SQRD)
+            accelerations.append(
+                x / mass, y / mass, z / mass, enums.AccelerationUnits.METER_PER_SEC_SQRD
+            )
         return accelerations
 
     def __add__(self, other):
@@ -311,10 +327,12 @@ class Accelerations:
         if not isinstance(other, Accelerations):
             return NotImplemented
         total = Accelerations()
-        for (x1, y1, z1), (x2, y2, z2) in zip(self.as_meter_per_sec_sqrd(),
-                                              other.as_meter_per_sec_sqrd()):
-            total.append(x1 + x2, y1 + y2, z1 + z2,
-                         enums.AccelerationUnits.METER_PER_SEC_SQRD)
+        for (x1, y1, z1), (x2, y2, z2) in zip(
+            self.as_meter_per_sec_sqrd(), other.as_meter_per_sec_sqrd()
+        ):
+            total.append(
+                x1 + x2, y1 + y2, z1 + z2, enums.AccelerationUnits.METER_PER_SEC_SQRD
+            )
         return total
 
     def __sub__(self, other):
@@ -322,10 +340,12 @@ class Accelerations:
         if not isinstance(other, Accelerations):
             return NotImplemented
         difference = Accelerations()
-        for (x1, y1, z1), (x2, y2, z2) in zip(self.as_meter_per_sec_sqrd(),
-                                              other.as_meter_per_sec_sqrd()):
-            difference.append(x1 - x2, y1 - y2, z1 - z2,
-                              enums.AccelerationUnits.METER_PER_SEC_SQRD)
+        for (x1, y1, z1), (x2, y2, z2) in zip(
+            self.as_meter_per_sec_sqrd(), other.as_meter_per_sec_sqrd()
+        ):
+            difference.append(
+                x1 - x2, y1 - y2, z1 - z2, enums.AccelerationUnits.METER_PER_SEC_SQRD
+            )
         return difference
 
     def __mul__(self, other):
@@ -333,9 +353,13 @@ class Accelerations:
         if not isinstance(other, (int, float)):
             return NotImplemented
         products = Accelerations()
-        for (x, y, z) in self.as_meter_per_sec_sqrd():
-            products.append(x * other, y * other, z * other,
-                            enums.AccelerationUnits.METER_PER_SEC_SQRD)
+        for x, y, z in self.as_meter_per_sec_sqrd():
+            products.append(
+                x * other,
+                y * other,
+                z * other,
+                enums.AccelerationUnits.METER_PER_SEC_SQRD,
+            )
         return products
 
     __rmul__ = __mul__
@@ -345,7 +369,7 @@ class Accelerations:
         strings = []
         for x, y, z in self._accelerations:
             strings.append(f"{x:10.6f} {y:10.6f} {z:10.6f}")
-        return '\n'.join(strings)
+        return "\n".join(strings)
 
     def __repr__(self):
         """Return object representation."""
@@ -413,10 +437,8 @@ class Forces:
         if not isinstance(other, Forces):
             return NotImplemented
         total = Forces()
-        for (x1, y1, z1), (x2, y2, z2) in zip(self.as_newton(),
-                                              other.as_newton()):
-            total.append(x1 + x2, y1 + y2, z1 + z2,
-                         enums.ForceUnits.NEWTON)
+        for (x1, y1, z1), (x2, y2, z2) in zip(self.as_newton(), other.as_newton()):
+            total.append(x1 + x2, y1 + y2, z1 + z2, enums.ForceUnits.NEWTON)
         return total
 
     def __sub__(self, other):
@@ -424,10 +446,8 @@ class Forces:
         if not isinstance(other, Forces):
             return NotImplemented
         difference = Forces()
-        for (x1, y1, z1), (x2, y2, z2) in zip(self.as_newton(),
-                                              other.as_newton()):
-            difference.append(x1 - x2, y1 - y2, z1 - z2,
-                              enums.ForceUnits.NEWTON)
+        for (x1, y1, z1), (x2, y2, z2) in zip(self.as_newton(), other.as_newton()):
+            difference.append(x1 - x2, y1 - y2, z1 - z2, enums.ForceUnits.NEWTON)
         return difference
 
     def __mul__(self, other):
@@ -435,9 +455,8 @@ class Forces:
         if not isinstance(other, (int, float)):
             return NotImplemented
         products = Forces()
-        for (x, y, z) in self.as_newton():
-            products.append(x * other, y * other, z * other,
-                            enums.ForceUnits.NEWTON)
+        for x, y, z in self.as_newton():
+            products.append(x * other, y * other, z * other, enums.ForceUnits.NEWTON)
         return products
 
     __rmul__ = __mul__
@@ -447,7 +466,7 @@ class Forces:
         strings = []
         for x, y, z in self._forces:
             strings.append(f"{x:10.6f}{y:10.6f}{z:10.6f}")
-        return '\n'.join(strings)
+        return "\n".join(strings)
 
     def __repr__(self):
         """Return object representation."""
@@ -488,12 +507,13 @@ class Frequencies:
         strings = []
         for frequency in self._frequencies:
             strings.append(f"{frequency:10.6f}")
-        return '\n'.join(strings)
+        return "\n".join(strings)
 
     def __repr__(self):
         """Return object representation."""
-        return (f"<Frequency object with {len(self._frequencies)} "
-                f"vibrational modes.>")
+        return (
+            f"<Frequency object with {len(self._frequencies)} " f"vibrational modes.>"
+        )
 
 
 class ForceConstants:
@@ -516,8 +536,7 @@ class ForceConstants:
         if units is enums.ForceConstantUnits.NEWTON_PER_METER:
             factor = 1
         elif units is enums.ForceConstantUnits.MILLIDYNE_PER_ANGSTROM:
-            factor = (sc.FROM_MILLI * sc.DYNE_TO_NEWTON
-                      * (1 / sc.ANGSTROM_TO_METER))
+            factor = sc.FROM_MILLI * sc.DYNE_TO_NEWTON * (1 / sc.ANGSTROM_TO_METER)
         else:
             raise ValueError(f"Unknown Force Constant Units: {units}")
         self._force_constants.append(force_constant * factor)
@@ -530,8 +549,7 @@ class ForceConstants:
 
     def as_millidyne_per_angstrom(self, index=None):
         """Return the entire list or specific index in millidyne/angstrom."""
-        factor = (sc.FROM_MILLI * sc.DYNE_TO_NEWTON
-                  * (1 / sc.ANGSTROM_TO_METER))
+        factor = sc.FROM_MILLI * sc.DYNE_TO_NEWTON * (1 / sc.ANGSTROM_TO_METER)
         if index is None:
             return [i * factor for i in self._force_constants]
         return self._force_constants[index] * factor
@@ -541,12 +559,14 @@ class ForceConstants:
         strings = []
         for force_constant in self._force_constants:
             strings.append(f"{force_constant:10.6f}")
-        return '\n'.join(strings)
+        return "\n".join(strings)
 
     def __repr__(self):
         """Return object representation."""
-        return (f"<ForceConstants object with {len(self._force_constants)} "
-                f"force constants.>")
+        return (
+            f"<ForceConstants object with {len(self._force_constants)} "
+            f"force constants.>"
+        )
 
 
 class Masses:
@@ -601,7 +621,7 @@ class Masses:
         strings = []
         for mass in self._masses:
             strings.append(f"{mass:10.6f}")
-        return '\n'.join(strings)
+        return "\n".join(strings)
 
     def __repr__(self):
         """Return object representation."""
@@ -716,7 +736,7 @@ class Energies:
         strings = []
         for energy in self._energies:
             strings.append(f"{energy:10.6f}")
-        return '\n'.join(strings)
+        return "\n".join(strings)
 
     def __repr__(self):
         """Return object representation."""

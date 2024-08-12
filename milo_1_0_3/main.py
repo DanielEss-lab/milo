@@ -29,10 +29,14 @@ def main():
 
         print_trajectory_units_header()
 
-        current_time = round(program_state.current_step *
-                        program_state.step_size.as_femtosecond(), 10)
-        print(f"### Step {program_state.current_step}: "
-              f"{current_time} fs ".ljust(66, '-'))
+        current_time = round(
+            program_state.current_step * program_state.step_size.as_femtosecond(), 10
+        )
+        print(
+            f"### Step {program_state.current_step}: " f"{current_time} fs ".ljust(
+                66, "-"
+            )
+        )
 
         print_structure(program_state)
 
@@ -48,10 +52,15 @@ def main():
             # Change to next time step
             print()
             program_state.current_step += 1
-            current_time = round(program_state.current_step *
-                            program_state.step_size.as_femtosecond(), 10)
-            print(f"### Step {program_state.current_step}: "
-                  f"{current_time} fs ".ljust(66, '-'))
+            current_time = round(
+                program_state.current_step * program_state.step_size.as_femtosecond(),
+                10,
+            )
+            print(
+                f"### Step {program_state.current_step}: " f"{current_time} fs ".ljust(
+                    66, "-"
+                )
+            )
 
             print_structure(program_state)
 
@@ -72,63 +81,70 @@ def main():
 def end_conditions_met(program_state):
     """Check conditions to see if the program should abort."""
     # Step count conditions
-    if (program_state.max_steps is not None
-            and program_state.current_step >= program_state.max_steps):
+    if (
+        program_state.max_steps is not None
+        and program_state.current_step >= program_state.max_steps
+    ):
         return True
     return False
 
 
 def output_xyz_file(program_state):
     """Write .xyz file."""
-    with open(f"{program_state.job_name}.xyz", 'w') as file:
-        starting_step = (program_state.current_step
-                         - len(program_state.structures) + 1)
-        for step, structure in enumerate(program_state.structures,
-                                         start=starting_step):
+    with open(f"{program_state.job_name}.xyz", "w") as file:
+        starting_step = program_state.current_step - len(program_state.structures) + 1
+        for step, structure in enumerate(program_state.structures, start=starting_step):
             file.write(f"{program_state.number_atoms}\n")
-            current_time = round(step *
-                            program_state.step_size.as_femtosecond(), 10)
+            current_time = round(step * program_state.step_size.as_femtosecond(), 10)
             file.write(f"  Step {step}: {current_time} fs\n")
-            for atom, (x, y, z) in zip(program_state.atoms,
-                                       structure.as_angstrom()):
+            for atom, (x, y, z) in zip(program_state.atoms, structure.as_angstrom()):
                 file.write(f"{atom.symbol} {x:15.6f} {y:15.6f} {z:15.6f}\n")
 
 
 def print_structure(program_state):
     """Print the last structure list in program_state."""
     print("  Coordinates:")
-    for atom, position in zip(program_state.atoms,
-                              program_state.structures[-1].as_angstrom()):
-        print(f"    {atom.symbol.ljust(2)} {position[0]:15.6f} "
-              f"{position[1]:15.6f} {position[2]:15.6f}")
+    for atom, position in zip(
+        program_state.atoms, program_state.structures[-1].as_angstrom()
+    ):
+        print(
+            f"    {atom.symbol.ljust(2)} {position[0]:15.6f} "
+            f"{position[1]:15.6f} {position[2]:15.6f}"
+        )
 
 
 def print_velocities(program_state):
     """Print the last set of velocities in program_state."""
     print("  Velocities:")
-    for atom, velocity in zip(program_state.atoms,
-                              program_state.velocities[-1].as_meter_per_sec()):
-        print(f"    {atom.symbol.ljust(2)} {velocity[0]:15.6e} "
-              f"{velocity[1]:15.6e} {velocity[2]:15.6e}")
+    for atom, velocity in zip(
+        program_state.atoms, program_state.velocities[-1].as_meter_per_sec()
+    ):
+        print(
+            f"    {atom.symbol.ljust(2)} {velocity[0]:15.6e} "
+            f"{velocity[1]:15.6e} {velocity[2]:15.6e}"
+        )
 
 
 def print_accelerations(program_state):
     """Print the last set of accelerations in program_state."""
     print("  Accelerations:")
-    for atom, acceleration in zip(program_state.atoms,
-                                  program_state.accelerations[-1].
-                                  as_meter_per_sec_sqrd()):
-        print(f"    {atom.symbol.ljust(2)} {acceleration[0]:15.6e} "
-              f"{acceleration[1]:15.6e} {acceleration[2]:15.6e}")
+    for atom, acceleration in zip(
+        program_state.atoms, program_state.accelerations[-1].as_meter_per_sec_sqrd()
+    ):
+        print(
+            f"    {atom.symbol.ljust(2)} {acceleration[0]:15.6e} "
+            f"{acceleration[1]:15.6e} {acceleration[2]:15.6e}"
+        )
 
 
 def print_forces(program_state):
     """Print the last set of forces in program_state."""
     print("  Forces:")
-    for atom, force in zip(program_state.atoms,
-                           program_state.forces[-1].as_newton()):
-        print(f"    {atom.symbol.ljust(2)} {force[0]:15.6e} "
-              f"{force[1]:15.6e} {force[2]:15.6e}")
+    for atom, force in zip(program_state.atoms, program_state.forces[-1].as_newton()):
+        print(
+            f"    {atom.symbol.ljust(2)} {force[0]:15.6e} "
+            f"{force[1]:15.6e} {force[2]:15.6e}"
+        )
 
 
 def print_energy(program_state):
@@ -180,7 +196,7 @@ def print_header():
 
 def print_trajectory_units_header():
     """Print the units that the data from each trajectory step will use."""
-    print("### Starting Trajectory ".ljust(66, '-'))
+    print("### Starting Trajectory ".ljust(66, "-"))
     print("  Units for trajectory output:")
     print("    Coordinates    angstrom")
     print("    SCF Energy     hartree")
